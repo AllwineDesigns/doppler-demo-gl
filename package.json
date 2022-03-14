@@ -2,6 +2,7 @@
   "name": "doppler-demo-gl",
   "version": "0.1.0",
   "private": true,
+  "homepage": ".",
   "dependencies": {
     "@react-three/drei": "^8.16.5",
     "@react-three/fiber": "^7.0.26",

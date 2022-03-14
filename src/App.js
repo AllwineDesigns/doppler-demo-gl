@@ -1,24 +1,14 @@
-import logo from './logo.svg';
+import { Canvas } from '@react-three/fiber';
+import { OrthographicCamera } from '@react-three/drei';
 import './App.css';
+import Rings from './Rings';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Canvas dpr={window.devicePixelRatio}>
+      <OrthographicCamera makeDefault position={[ 0, 0, 10]}/>
+      <Rings/>
+    </Canvas>
   );
 }
 

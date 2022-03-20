@@ -1,3 +1,5 @@
+import { Curve3 } from './curve3';
+
 const MOUSE_ID = "mouse";
 export default class Touches {
   constructor() {
@@ -24,14 +26,20 @@ export default class Touches {
           touch.lastX = eTouch.clientX;
           touch.lastY = eTouch.clientY;
           touch.lastTime = now;
+          touch.curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ])
+          touch.lineBuffer = touch.curve.resampledBuffer();
         }
       } else {
+        const curve = new Curve3();
+        curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ]);
         const touch = {
           lastX: eTouch.clientX,
           lastY: eTouch.clientY,
           vx: 0,
           vy: 0,
-          lastTime: now
+          lastTime: now,
+          lastCurve: now,
+          curve
         };
         this.touches[id] = touch;
       }
@@ -53,7 +61,9 @@ export default class Touches {
   }
 
   mouseDown(e) {
-    this.touches[MOUSE_ID] = { vx: 0, vy: 0, lastX: e.clientX, lastY: e.clientY, lastTime: performance.now() };
+    const curve = new Curve3();
+    curve.addPoint([ e.clientX, e.clientY, 0 ]);
+    this.touches[MOUSE_ID] = { vx: 0, vy: 0, lastX: e.clientX, lastY: e.clientY, lastTime: performance.now(), lastCurve: performance.now(), curve };
     this.isMouseDown = true;
     e.preventDefault();
   }
@@ -68,6 +78,10 @@ export default class Touches {
         touch.lastX = e.clientX;
         touch.lastY = e.clientY;
         touch.lastTime = now;
+
+        touch.curve.addPoint([ e.clientX, e.clientY, 0 ])
+        touch.lineBuffer = touch.curve.resampledBuffer();
+        touch.lastCurve = now;
       }
     }
     e.preventDefault();

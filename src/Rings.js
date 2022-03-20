@@ -1,9 +1,15 @@
 import { useRef, useEffect } from 'react';
 import { useThree, extend, useFrame } from '@react-three/fiber';
 import { RingsGeometry, RingsMaterial } from './three/rings-geometry';
-import { Vector2 } from 'three';
+import { Vector2, LineBasicMaterial, Line, BufferGeometry, BufferAttribute } from 'three';
 import now from 'performance-now';
 import TouchManager from './touches';
+import create from 'zustand';
+
+export const useTouchLines = create(set => ({
+  lineObjects: [],
+  setLines: (lineObjects) => set({ lineObjects })
+}));
 
 extend({ RingsGeometry, RingsMaterial });
 
@@ -17,12 +23,29 @@ export default function Rings(props) {
   const ringsMaterialRef = useRef();
   const { gl, size } = useThree();
 
+  const { setLines } = useTouchLines();
+
   useEffect(() => {
     const onStart = (e) => {
       appTouches.touch(e);
     };
     const onMove = (e) => {
       appTouches.touch(e);
+
+      const touches = appTouches.getTouches();
+      const lineObjects = [];
+      const material = new LineBasicMaterial({ color: 0x000000 });
+      for(let touch of touches) {
+        if(touch.lineBuffer) {
+          const positionAttribute = new BufferAttribute(touch.lineBuffer, 3);
+          const geometry = new BufferGeometry();
+          geometry.setAttribute('position', positionAttribute);
+          const lineObject = new Line(geometry, material);
+          lineObjects.push(lineObject);
+        }
+      }
+
+      setLines(lineObjects);
     };
     const onEnd = (e) => {
       appTouches.touch(e);
@@ -32,6 +55,21 @@ export default function Rings(props) {
     };
     const onMouseMove = (e) => {
       appTouches.mouseMove(e);
+
+      const touches = appTouches.getTouches();
+      const lineObjects = [];
+      const material = new LineBasicMaterial({ color: 0x000000 });
+      for(let touch of touches) {
+        if(touch.lineBuffer) {
+          const positionAttribute = new BufferAttribute(touch.lineBuffer, 3);
+          const geometry = new BufferGeometry();
+          geometry.setAttribute('position', positionAttribute);
+          const lineObject = new Line(geometry, material);
+          lineObjects.push(lineObject);
+        }
+      }
+
+      setLines(lineObjects);
     };
     const onMouseUp = (e) => {
       appTouches.mouseUp(e);
@@ -74,14 +112,14 @@ export default function Rings(props) {
       gl.domElement.removeEventListener('touchend', onEnd);
       clearTimeout(pulseID);
     }
-  }, [ size, gl ]);
+  }, [ size, gl, setLines ]);
 
   useFrame(() => {
     if(ringsMaterialRef) {
       ringsMaterialRef.current.uniforms.time.value = now()/1000;
     }
   });
-  
+
   return (<mesh>
     <ringsGeometry ref={ringsRef}/>
     <ringsMaterial ref={ringsMaterialRef}/>

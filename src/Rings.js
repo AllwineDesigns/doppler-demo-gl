@@ -49,6 +49,21 @@ export default function Rings(props) {
     };
     const onEnd = (e) => {
       appTouches.touch(e);
+
+      const touches = appTouches.getTouches();
+      const lineObjects = [];
+      const material = new LineBasicMaterial({ color: 0x000000 });
+      for(let touch of touches) {
+        if(touch.lineBuffer) {
+          const positionAttribute = new BufferAttribute(touch.lineBuffer, 3);
+          const geometry = new BufferGeometry();
+          geometry.setAttribute('position', positionAttribute);
+          const lineObject = new Line(geometry, material);
+          lineObjects.push(lineObject);
+        }
+      }
+
+      setLines(lineObjects);
     };
     const onMouseDown = (e) => {
       appTouches.mouseDown(e);
@@ -73,6 +88,21 @@ export default function Rings(props) {
     };
     const onMouseUp = (e) => {
       appTouches.mouseUp(e);
+
+      const touches = appTouches.getTouches();
+      const lineObjects = [];
+      const material = new LineBasicMaterial({ color: 0x000000 });
+      for(let touch of touches) {
+        if(touch.lineBuffer) {
+          const positionAttribute = new BufferAttribute(touch.lineBuffer, 3);
+          const geometry = new BufferGeometry();
+          geometry.setAttribute('position', positionAttribute);
+          const lineObject = new Line(geometry, material);
+          lineObjects.push(lineObject);
+        }
+      }
+
+      setLines(lineObjects);
     };
 
     let pulseID;
@@ -80,8 +110,8 @@ export default function Rings(props) {
     const pulse = () => {
       const touches = appTouches.getTouches();
       for(let touch of touches) {
-        pos.x = touch.lastX-size.width*.5;
-        pos.y = -touch.lastY+size.height*.5;
+        pos.x = touch.currentX-size.width*.5;
+        pos.y = -touch.currentY+size.height*.5;
         vel.x = touch.vx;
         vel.y = -touch.vy;
         ringsRef.current.createRing(pos,
@@ -92,6 +122,13 @@ export default function Rings(props) {
       ringsRef.current.update();
       pulseID = setTimeout(pulse, pulsePeriod);
     };
+    let stepID;
+    const stepPeriod = 16;
+    const step = () => {
+      appTouches.step(stepPeriod);
+      stepID = setTimeout(step, stepPeriod);
+    };
+    stepID = setTimeout(step, stepPeriod);
     console.log("Adding...");
     gl.domElement.addEventListener('mousedown', onMouseDown, { passive: false });
     gl.domElement.addEventListener('mousemove', onMouseMove, { passive: false });
@@ -111,6 +148,7 @@ export default function Rings(props) {
       gl.domElement.removeEventListener('touchmove', onMove);
       gl.domElement.removeEventListener('touchend', onEnd);
       clearTimeout(pulseID);
+      clearTimeout(stepID);
     }
   }, [ size, gl, setLines ]);
 

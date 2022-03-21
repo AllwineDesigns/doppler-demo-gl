@@ -11,6 +11,28 @@ export default class Touches {
     this.mouseVY = 0;
   }
 
+  step(dt) {
+    const f = .1;
+    Object.values(this.touches).forEach((touch) => {
+      touch.lengthAlongCurve += 200/1000*dt;
+
+      const t = touch.curve.paramAtLength(touch.lengthAlongCurve);
+      if(t === 1) {
+        touch.lengthAlongCurve = touch.curve.lengthAt(1);
+      }
+
+      const p = touch.curve.pointAt(t);
+
+      const lastX = touch.currentX;
+      const lastY = touch.currentY;
+
+      touch.currentX = p[0];
+      touch.currentY = p[1];
+      touch.vx = 1000*(lastX-touch.currentX)/dt;
+      touch.vy = 1000*(lastY-touch.currentY)/dt;
+    });
+  }
+
   touch(e) {
     let seen = {};
     const now = performance.now();
@@ -21,10 +43,8 @@ export default class Touches {
       if(this.touches[id]) {
         const touch = this.touches[id];
         if(now-this.touches[id].lastTime > 0) {
-          touch.vx = 1000*(eTouch.clientX-touch.lastX)/(now-touch.lastTime);
-          touch.vy = 1000*(eTouch.clientY-touch.lastY)/(now-touch.lastTime);
-          touch.lastX = eTouch.clientX;
-          touch.lastY = eTouch.clientY;
+          touch.clientX = eTouch.clientX;
+          touch.clientY = eTouch.clientY;
           touch.lastTime = now;
           touch.curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ])
           touch.lineBuffer = touch.curve.resampledBuffer();
@@ -33,8 +53,11 @@ export default class Touches {
         const curve = new Curve3();
         curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ]);
         const touch = {
-          lastX: eTouch.clientX,
-          lastY: eTouch.clientY,
+          clientX: eTouch.clientX,
+          clientY: eTouch.clientY,
+          currentX: eTouch.clientX,
+          currentY: eTouch.clientY,
+          lengthAlongCurve: 0,
           vx: 0,
           vy: 0,
           lastTime: now,
@@ -63,7 +86,18 @@ export default class Touches {
   mouseDown(e) {
     const curve = new Curve3();
     curve.addPoint([ e.clientX, e.clientY, 0 ]);
-    this.touches[MOUSE_ID] = { vx: 0, vy: 0, lastX: e.clientX, lastY: e.clientY, lastTime: performance.now(), lastCurve: performance.now(), curve };
+    this.touches[MOUSE_ID] = { 
+      vx: 0, 
+      vy: 0, 
+      clientX: e.clientX, 
+      clientY: e.clientY, 
+      currentX: e.clientX,
+      currentY: e.clientY,
+      lastTime: performance.now(), 
+      lastCurve: performance.now(), 
+      lengthAlongCurve: 0,
+      curve 
+    };
     this.isMouseDown = true;
     e.preventDefault();
   }
@@ -72,11 +106,11 @@ export default class Touches {
       const now = performance.now();
       const touch = this.touches[MOUSE_ID];
       if(now-touch.lastTime > 0) {
-        touch.vx = 1000*(e.clientX-touch.lastX)/(now-touch.lastTime);
-        touch.vy = 1000*(e.clientY-touch.lastY)/(now-touch.lastTime);
+        touch.vx = 1000*(e.clientX-touch.clientX)/(now-touch.lastTime);
+        touch.vy = 1000*(e.clientY-touch.clientY)/(now-touch.lastTime);
 
-        touch.lastX = e.clientX;
-        touch.lastY = e.clientY;
+        touch.clientX = e.clientX;
+        touch.clientY = e.clientY;
         touch.lastTime = now;
 
         touch.curve.addPoint([ e.clientX, e.clientY, 0 ])

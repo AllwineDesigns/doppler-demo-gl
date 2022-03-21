@@ -1,4 +1,6 @@
 import { Curve3 } from './curve3';
+import { LineBasicMaterial, Line, BufferGeometry, BufferAttribute } from 'three';
+import { useTouchLines } from './Rings';
 
 const MOUSE_ID = "mouse";
 export default class Touches {
@@ -12,8 +14,21 @@ export default class Touches {
   }
 
   step(dt) {
-    const f = .1;
     Object.values(this.touches).forEach((touch) => {
+      const f = .3;
+      touch.filteredX = f*touch.clientX+(1-f)*touch.filteredX;
+      touch.filteredY = f*touch.clientY+(1-f)*touch.filteredY;
+
+      const lastCurvePt = touch.curve.points[touch.curve.points.length-1];
+      const dx = lastCurvePt[0]-touch.filteredX;
+      const dy = lastCurvePt[1]-touch.filteredY;
+      const mag = Math.sqrt(dx*dx+dy*dy);
+
+      if(mag > .1) {
+        touch.curve.addPoint([ touch.filteredX, touch.filteredY, 0 ])
+      }
+      touch.lineBuffer = touch.curve.resampledBufferBetweenLengths(touch.lengthAlongCurve, touch.curve.lengthAt(1));
+
       touch.lengthAlongCurve += 200/1000*dt;
 
       const t = touch.curve.paramAtLength(touch.lengthAlongCurve);
@@ -31,6 +46,20 @@ export default class Touches {
       touch.vx = 1000*(touch.currentX-lastX)/dt;
       touch.vy = 1000*(touch.currentY-lastY)/dt;
     });
+
+    const lineObjects = [];
+    const material = new LineBasicMaterial({ color: 0x000000 });
+    Object.values(this.touches).forEach((touch) => {
+      if(touch.lineBuffer) {
+        const positionAttribute = new BufferAttribute(touch.lineBuffer, 3);
+        const geometry = new BufferGeometry();
+        geometry.setAttribute('position', positionAttribute);
+        const lineObject = new Line(geometry, material);
+        lineObjects.push(lineObject);
+      }
+    });
+    useTouchLines.getState().setLines(lineObjects);
+
   }
 
   touch(e) {
@@ -46,8 +75,8 @@ export default class Touches {
           touch.clientX = eTouch.clientX;
           touch.clientY = eTouch.clientY;
           touch.lastTime = now;
-          touch.curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ])
-          touch.lineBuffer = touch.curve.resampledBuffer();
+//          touch.curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ])
+//          touch.lineBuffer = touch.curve.resampledBuffer();
         }
       } else {
         const curve = new Curve3();
@@ -57,11 +86,12 @@ export default class Touches {
           clientY: eTouch.clientY,
           currentX: eTouch.clientX,
           currentY: eTouch.clientY,
+          filteredX: eTouch.clientX,
+          filteredY: eTouch.clientY,
           lengthAlongCurve: 0,
           vx: 0,
           vy: 0,
           lastTime: now,
-          lastCurve: now,
           curve
         };
         this.touches[id] = touch;
@@ -93,8 +123,9 @@ export default class Touches {
       clientY: e.clientY, 
       currentX: e.clientX,
       currentY: e.clientY,
+      filteredX: e.clientX,
+      filteredY: e.clientY,
       lastTime: performance.now(), 
-      lastCurve: performance.now(), 
       lengthAlongCurve: 0,
       curve 
     };
@@ -113,9 +144,8 @@ export default class Touches {
         touch.clientY = e.clientY;
         touch.lastTime = now;
 
-        touch.curve.addPoint([ e.clientX, e.clientY, 0 ])
-        touch.lineBuffer = touch.curve.resampledBuffer();
-        touch.lastCurve = now;
+//        touch.curve.addPoint([ e.clientX, e.clientY, 0 ])
+//        touch.lineBuffer = touch.curve.resampledBuffer();
       }
     }
     e.preventDefault();

@@ -205,7 +205,9 @@ varying vec2 vDir;
 
 void main() {
   float l = length(vPos-vStartPos);
-  gl_FragColor.rgba = vec4(clamp(dot(-.01*vVel, normalize(vDir)), 0.0, 1.0),0.0,clamp(dot(.01*vVel, normalize(vDir)), 0.0, 1.0), 1000.0/(l*l));
+  vec2 ndir = normalize(vDir);
+  gl_FragColor.rgba = vec4(clamp(dot(-.01*vVel, ndir)*1000.0/(l*l), 0.0, 1.0),0.0,clamp(dot(.01*vVel, ndir)*1000.0/(l*l), 0.0, 1.0), 1000.0/(l*l));
+//  gl_FragColor.rgba = vec4(clamp(dot(-.01*vVel, ndir), 0.0, 1.0),0.0,clamp(dot(.01*vVel, ndir), 0.0, 1.0), 1);
 }
 `;
     const uniforms = {

@@ -143,6 +143,22 @@ export class Curve3 {
     return this.lengths[i]*(1-t)+this.lengths[i+1]*t;
   }
 
+  resampledBufferBetweenLengths(from, to) {
+    const samples = Math.trunc(Math.max(this.samplesPerLinearLength*(to-from), 4));
+    const divideBy = this.isLoop ? samples : samples -1;
+    const array = [];
+
+    const totalLength = to-from;
+    for(let i = 0; i < samples; i++) {
+      const t = this.paramAtLength(from+totalLength*i/divideBy);
+      const p = this.pointAt(t);
+
+      array.push(p[0], p[1], p[2]);
+    }
+
+    return Float32Array.from(array);
+  }
+
   resampledBuffer() {
     /*
     const samples = Math.trunc(Math.max(this.samplesPerLinearLength*this.linearLength, 4));

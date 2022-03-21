@@ -23,86 +23,24 @@ export default function Rings(props) {
   const ringsMaterialRef = useRef();
   const { gl, size } = useThree();
 
-  const { setLines } = useTouchLines();
-
   useEffect(() => {
     const onStart = (e) => {
       appTouches.touch(e);
     };
     const onMove = (e) => {
       appTouches.touch(e);
-
-      const touches = appTouches.getTouches();
-      const lineObjects = [];
-      const material = new LineBasicMaterial({ color: 0x000000 });
-      for(let touch of touches) {
-        if(touch.lineBuffer) {
-          const positionAttribute = new BufferAttribute(touch.lineBuffer, 3);
-          const geometry = new BufferGeometry();
-          geometry.setAttribute('position', positionAttribute);
-          const lineObject = new Line(geometry, material);
-          lineObjects.push(lineObject);
-        }
-      }
-
-      setLines(lineObjects);
     };
     const onEnd = (e) => {
       appTouches.touch(e);
-
-      const touches = appTouches.getTouches();
-      const lineObjects = [];
-      const material = new LineBasicMaterial({ color: 0x000000 });
-      for(let touch of touches) {
-        if(touch.lineBuffer) {
-          const positionAttribute = new BufferAttribute(touch.lineBuffer, 3);
-          const geometry = new BufferGeometry();
-          geometry.setAttribute('position', positionAttribute);
-          const lineObject = new Line(geometry, material);
-          lineObjects.push(lineObject);
-        }
-      }
-
-      setLines(lineObjects);
     };
     const onMouseDown = (e) => {
       appTouches.mouseDown(e);
     };
     const onMouseMove = (e) => {
       appTouches.mouseMove(e);
-
-      const touches = appTouches.getTouches();
-      const lineObjects = [];
-      const material = new LineBasicMaterial({ color: 0x000000 });
-      for(let touch of touches) {
-        if(touch.lineBuffer) {
-          const positionAttribute = new BufferAttribute(touch.lineBuffer, 3);
-          const geometry = new BufferGeometry();
-          geometry.setAttribute('position', positionAttribute);
-          const lineObject = new Line(geometry, material);
-          lineObjects.push(lineObject);
-        }
-      }
-
-      setLines(lineObjects);
     };
     const onMouseUp = (e) => {
       appTouches.mouseUp(e);
-
-      const touches = appTouches.getTouches();
-      const lineObjects = [];
-      const material = new LineBasicMaterial({ color: 0x000000 });
-      for(let touch of touches) {
-        if(touch.lineBuffer) {
-          const positionAttribute = new BufferAttribute(touch.lineBuffer, 3);
-          const geometry = new BufferGeometry();
-          geometry.setAttribute('position', positionAttribute);
-          const lineObject = new Line(geometry, material);
-          lineObjects.push(lineObject);
-        }
-      }
-
-      setLines(lineObjects);
     };
 
     let pulseID;
@@ -150,7 +88,7 @@ export default function Rings(props) {
       clearTimeout(pulseID);
       clearTimeout(stepID);
     }
-  }, [ size, gl, setLines ]);
+  }, [ size, gl ]);
 
   useFrame(() => {
     if(ringsMaterialRef) {

@@ -28,8 +28,8 @@ export default class Touches {
 
       touch.currentX = p[0];
       touch.currentY = p[1];
-      touch.vx = 1000*(lastX-touch.currentX)/dt;
-      touch.vy = 1000*(lastY-touch.currentY)/dt;
+      touch.vx = 1000*(touch.currentX-lastX)/dt;
+      touch.vy = 1000*(touch.currentY-lastY)/dt;
     });
   }
 

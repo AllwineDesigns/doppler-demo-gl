@@ -1,7 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { useThree, extend, useFrame } from '@react-three/fiber';
 import { RingsGeometry, RingsMaterial } from './three/rings-geometry';
-import { Vector2, LineBasicMaterial, Line, BufferGeometry, BufferAttribute } from 'three';
+import { Vector2 } from 'three';
 import now from 'performance-now';
 import TouchManager from './touches';
 import create from 'zustand';

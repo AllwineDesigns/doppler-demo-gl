@@ -102,9 +102,7 @@ export default class Touches {
         const curve = new Curve3();
         curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ]);
         const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
-        const player = new Tone.Player("ambulance3.wav").connect(frequencyShifter);
-//        const player = new Tone.Player("moonlight.mp3").connect(frequencyShifter);
-//        const player = new Tone.Player("car-rev.mp3").connect(frequencyShifter);
+        const player = new Tone.Player("ambulance.wav").connect(frequencyShifter);
         player.autostart = true;
         player.loop = true;
         const cleanup = () => {
@@ -153,9 +151,7 @@ export default class Touches {
 
     const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
 //    const player = new Tone.Synth().connect(frequencyShifter);
-    const player = new Tone.Player("ambulance3.wav").connect(frequencyShifter);
-//    const player = new Tone.Player("moonlight.mp3").connect(frequencyShifter);
-//    const player = new Tone.Player("car-rev.mp3").connect(frequencyShifter);
+    const player = new Tone.Player("ambulance.wav").connect(frequencyShifter);
     player.autostart = true;
     player.loop = true;
     const cleanup = () => {

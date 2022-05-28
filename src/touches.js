@@ -1,6 +1,7 @@
 import { Curve3 } from './curve3';
 import { LineBasicMaterial, Line, BufferGeometry, BufferAttribute } from 'three';
 import { useTouchLines } from './Rings';
+import * as Tone from 'tone'
 
 const MOUSE_ID = "mouse";
 export default class Touches {
@@ -45,10 +46,29 @@ export default class Touches {
       touch.currentY = p[1];
       touch.vx = 1000*(touch.currentX-lastX)/dt;
       touch.vy = 1000*(touch.currentY-lastY)/dt;
+
+      const receiverX = window.innerWidth*.5;
+      const receiverY = window.innerHeight*.5;
+
+      const rdx = touch.currentX-receiverX;
+      const rdy = touch.currentY-receiverY;
+      const rmag = Math.sqrt(rdx*rdx+rdy*rdy);
+
+      const dirx = rdx/rmag;
+      const diry = rdy/rmag;
+
+      const dot = touch.vx*dirx + touch.vy*diry;
+
+      const frequency = -dot/200*60;
+
+      const volume = Math.min(0,-6*Math.log(rmag/100)/Math.log(2));
+
+      touch.frequencyShifter.set({ frequency });
+      touch.player.volume.value = volume;
     });
 
     const lineObjects = [];
-    const material = new LineBasicMaterial({ color: 0x000000 });
+    const material = new LineBasicMaterial({ color: 0xffffff });
     Object.values(this.touches).forEach((touch) => {
       if(touch.lineBuffer) {
         const positionAttribute = new BufferAttribute(touch.lineBuffer, 3);
@@ -81,7 +101,18 @@ export default class Touches {
       } else {
         const curve = new Curve3();
         curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ]);
+        const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
+        const player = new Tone.Player("ambulance3.wav").connect(frequencyShifter);
+//        const player = new Tone.Player("moonlight.mp3").connect(frequencyShifter);
+//        const player = new Tone.Player("car-rev.mp3").connect(frequencyShifter);
+        player.autostart = true;
+        player.loop = true;
+        const cleanup = () => {
+          player.dispose();
+          frequencyShifter.dispose();
+        };
         const touch = {
+          cleanup,
           clientX: eTouch.clientX,
           clientY: eTouch.clientY,
           currentX: eTouch.clientX,
@@ -89,6 +120,8 @@ export default class Touches {
           filteredX: eTouch.clientX,
           filteredY: eTouch.clientY,
           lengthAlongCurve: 0,
+          player,
+          frequencyShifter,
           vx: 0,
           vy: 0,
           lastTime: now,
@@ -100,6 +133,7 @@ export default class Touches {
     const keys = Object.keys(this.touches);
     for(let id of keys) {
       if(!seen[id]) {
+        this.touches[id].cleanup();
         delete this.touches[id];
       }
     }
@@ -116,7 +150,20 @@ export default class Touches {
   mouseDown(e) {
     const curve = new Curve3();
     curve.addPoint([ e.clientX, e.clientY, 0 ]);
-    this.touches[MOUSE_ID] = { 
+
+    const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
+//    const player = new Tone.Synth().connect(frequencyShifter);
+    const player = new Tone.Player("ambulance3.wav").connect(frequencyShifter);
+//    const player = new Tone.Player("moonlight.mp3").connect(frequencyShifter);
+//    const player = new Tone.Player("car-rev.mp3").connect(frequencyShifter);
+    player.autostart = true;
+    player.loop = true;
+    const cleanup = () => {
+      player.dispose();
+      frequencyShifter.dispose();
+    };
+    const touch = { 
+      cleanup,
       vx: 0, 
       vy: 0, 
       clientX: e.clientX, 
@@ -127,8 +174,11 @@ export default class Touches {
       filteredY: e.clientY,
       lastTime: performance.now(), 
       lengthAlongCurve: 0,
+      player,
+      frequencyShifter,
       curve 
     };
+    this.touches[MOUSE_ID] = touch;
     this.isMouseDown = true;
     e.preventDefault();
   }
@@ -153,6 +203,7 @@ export default class Touches {
   mouseUp(e) {
     this.isMouseDown = false;
     if(this.touches[MOUSE_ID]) {
+      this.touches[MOUSE_ID].cleanup();
       delete this.touches[MOUSE_ID];
     }
     e.preventDefault();

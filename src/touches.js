@@ -65,10 +65,12 @@ export default class Touches {
 
       const frequency = -((2**((dot/200)/12))*touch.player.frequency.value- touch.player.frequency.value);
 
-      touch.frequencyShifter.set({ frequency });
+      setTimeout(() => {
+        touch.frequencyShifter.set({ frequency });
 
-      const volume = calcVolume(rmag);
-      touch.player.volume.value = volume;
+        const volume = calcVolume(rmag);
+        touch.player.volume.value = volume;
+      }, rmag/300*1000);
     });
 
     const lineObjects = [];
@@ -105,16 +107,14 @@ export default class Touches {
       } else {
         const curve = new Curve3();
         curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ]);
-        const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
 
+        const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
         const notes = [ "C3", "E3", "G3", "C4", "E4", "G4", "C5" ];
-        const ampEnv = new Tone.AmplitudeEnvelope({
-          attack: .1,
-          decay: 0.2,
-          sustain: 1.0,
-          release: 0.8
-        })
-        const player = new Tone.Oscillator(notes[Math.floor(Math.random()*notes.length)], "sine").connect(ampEnv).connect(frequencyShifter);
+        const synth = new Tone.Synth();
+        synth.oscillator.type = "sine";
+        synth.envelope.sustain = 1;
+        console.log(synth.envelope.attack, synth.envelope.release);
+        const player = synth.connect(frequencyShifter);
 
         const receiverX = window.innerWidth*.5;
         const receiverY = window.innerHeight*.5;
@@ -126,11 +126,26 @@ export default class Touches {
         const volume = calcVolume(rmag);
 
         player.volume.value = volume;
-        player.start("+" + rmag/400);
+        player.triggerAttack(notes[Math.floor(Math.random()*notes.length)], "+" + Math.max(0,(rmag/300-synth.envelope.attack)));
 
-        const cleanup = () => {
-          player.dispose();
-          frequencyShifter.dispose();
+        const cleanup = (touch) => {
+          const receiverX = window.innerWidth*.5;
+          const receiverY = window.innerHeight*.5;
+
+          const rdx = touch.currentX-receiverX;
+          const rdy = touch.currentX-receiverY;
+          const rmag = Math.sqrt(rdx*rdx+rdy*rdy);
+
+          const time = rmag/300 - synth.envelope.release;
+          if(time > 0) {
+            synth.triggerRelease("+" + time);
+          } else {
+            synth.triggerRelease();
+          }
+          setTimeout(() => {
+            player.dispose();
+            frequencyShifter.dispose();
+          }, 6000)
         };
         const touch = {
           cleanup,
@@ -154,7 +169,7 @@ export default class Touches {
     const keys = Object.keys(this.touches);
     for(let id of keys) {
       if(!seen[id]) {
-        this.touches[id].cleanup();
+        this.touches[id].cleanup(this.touches[id]);
         delete this.touches[id];
       }
     }
@@ -174,13 +189,11 @@ export default class Touches {
 
     const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
     const notes = [ "C3", "E3", "G3", "C4", "E4", "G4", "C5" ];
-    const ampEnv = new Tone.AmplitudeEnvelope({
-      attack: .1,
-      decay: 0.2,
-      sustain: 1.0,
-      release: 0.8
-    })
-    const player = new Tone.Oscillator(notes[Math.floor(Math.random()*notes.length)], "sine").connect(ampEnv).start().connect(frequencyShifter);
+    const synth = new Tone.Synth();
+    synth.oscillator.type = "sine";
+    synth.envelope.sustain = 1;
+    console.log(synth.envelope.attack, synth.envelope.release);
+    const player = synth.connect(frequencyShifter);
 
     const receiverX = window.innerWidth*.5;
     const receiverY = window.innerHeight*.5;
@@ -192,11 +205,26 @@ export default class Touches {
     const volume = calcVolume(rmag);
 
     player.volume.value = volume;
-    player.start("+" + rmag/400);
+    player.triggerAttack(notes[Math.floor(Math.random()*notes.length)], "+" + Math.max(0,(rmag/300-synth.envelope.attack)));
 
-    const cleanup = () => {
-      player.dispose();
-      frequencyShifter.dispose();
+    const cleanup = (touch) => {
+      const receiverX = window.innerWidth*.5;
+      const receiverY = window.innerHeight*.5;
+
+      const rdx = touch.currentX-receiverX;
+      const rdy = touch.currentX-receiverY;
+      const rmag = Math.sqrt(rdx*rdx+rdy*rdy);
+
+      const time = rmag/300 - synth.envelope.release;
+      if(time > 0) {
+        synth.triggerRelease("+" + time);
+      } else {
+        synth.triggerRelease();
+      }
+      setTimeout(() => {
+        player.dispose();
+        frequencyShifter.dispose();
+      }, 6000)
     };
     const touch = { 
       cleanup,
@@ -239,7 +267,7 @@ export default class Touches {
   mouseUp(e) {
     this.isMouseDown = false;
     if(this.touches[MOUSE_ID]) {
-      this.touches[MOUSE_ID].cleanup();
+      this.touches[MOUSE_ID].cleanup(this.touches[MOUSE_ID]);
       delete this.touches[MOUSE_ID];
     }
     e.preventDefault();

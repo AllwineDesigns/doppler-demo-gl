@@ -60,7 +60,6 @@ export default class Touches {
       const dot = touch.vx*dirx + touch.vy*diry;
 
       const frequency = -((2**((dot/200)/12))*touch.player.frequency.value- touch.player.frequency.value);
-      console.log(frequency);
 
       const volume = Math.min(0,-6*Math.log(rmag/100)/Math.log(2));
 

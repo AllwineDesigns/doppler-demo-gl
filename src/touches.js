@@ -4,7 +4,7 @@ import { useTouchLines } from './Rings';
 import * as Tone from 'tone'
 
 const calcVolume = (dist) => {
-  return Math.min(-12,-6*Math.log(dist/2)/Math.log(2));
+  return Math.min(-12,-6*Math.log(dist/10)/Math.log(2));
 };
 
 const MOUSE_ID = "mouse";

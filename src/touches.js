@@ -3,6 +3,10 @@ import { LineBasicMaterial, Line, BufferGeometry, BufferAttribute } from 'three'
 import { useTouchLines } from './Rings';
 import * as Tone from 'tone'
 
+const calcVolume = (dist) => {
+  return Math.min(0,-6*Math.log(dist/2)/Math.log(2));
+};
+
 const MOUSE_ID = "mouse";
 export default class Touches {
   constructor() {
@@ -63,7 +67,7 @@ export default class Touches {
 
       touch.frequencyShifter.set({ frequency });
 
-      const volume = Math.min(0,-6*Math.log(rmag)/Math.log(2));
+      const volume = calcVolume(rmag);
       touch.player.volume.value = volume;
     });
 
@@ -105,7 +109,7 @@ export default class Touches {
 
         const notes = [ "C3", "E3", "G3", "C4", "E4", "G4", "C5" ];
         const ampEnv = new Tone.AmplitudeEnvelope({
-          attack: 1,
+          attack: .1,
           decay: 0.2,
           sustain: 1.0,
           release: 0.8
@@ -119,10 +123,10 @@ export default class Touches {
         const rdy = eTouch.clientY-receiverY;
         const rmag = Math.sqrt(rdx*rdx+rdy*rdy);
 
-        const volume = Math.min(0,-6*Math.log(rmag)/Math.log(2));
+        const volume = calcVolume(rmag);
 
         player.volume.value = volume;
-        player.start();
+        player.start("+" + rmag/400);
 
         const cleanup = () => {
           player.dispose();
@@ -171,7 +175,7 @@ export default class Touches {
     const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
     const notes = [ "C3", "E3", "G3", "C4", "E4", "G4", "C5" ];
     const ampEnv = new Tone.AmplitudeEnvelope({
-      attack: 1,
+      attack: .1,
       decay: 0.2,
       sustain: 1.0,
       release: 0.8
@@ -185,10 +189,10 @@ export default class Touches {
     const rdy = e.clientY-receiverY;
     const rmag = Math.sqrt(rdx*rdx+rdy*rdy);
 
-    const volume = Math.min(0,-6*Math.log(rmag)/Math.log(2));
+    const volume = calcVolume(rmag);
 
     player.volume.value = volume;
-    player.start();
+    player.start("+" + rmag/400);
 
     const cleanup = () => {
       player.dispose();

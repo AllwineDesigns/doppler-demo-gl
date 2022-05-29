@@ -55,7 +55,7 @@ export default function Rings(props) {
         ringsRef.current.createRing(pos,
                                     vel,
                                     now()/1000,
-                                    300);
+                                    600);
       }
       ringsRef.current.update();
       pulseID = setTimeout(pulse, pulsePeriod);

@@ -4,7 +4,7 @@ import { useTouchLines } from './Rings';
 import * as Tone from 'tone'
 
 const calcVolume = (dist) => {
-  return Math.min(0,-6*Math.log(dist/2)/Math.log(2));
+  return Math.min(-12,-6*Math.log(dist/2)/Math.log(2));
 };
 
 const MOUSE_ID = "mouse";
@@ -34,7 +34,7 @@ export default class Touches {
       }
       touch.lineBuffer = touch.curve.resampledBufferBetweenLengths(touch.lengthAlongCurve, touch.curve.lengthAt(1));
 
-      touch.lengthAlongCurve += 200/1000*dt;
+      touch.lengthAlongCurve += 400/1000*dt;
 
       const t = touch.curve.paramAtLength(touch.lengthAlongCurve);
       if(t === 1) {
@@ -63,14 +63,12 @@ export default class Touches {
 
       const dot = touch.vx*dirx + touch.vy*diry;
 
-      const frequency = -((2**((dot/200)/12))*touch.player.frequency.value- touch.player.frequency.value);
+      const frequency = -((2**((dot/400)/12))*touch.player.frequency.value- touch.player.frequency.value);
 
-      setTimeout(() => {
-        touch.frequencyShifter.set({ frequency });
+      touch.frequencyShifter.set({ frequency });
 
-        const volume = calcVolume(rmag);
-        touch.player.volume.value = volume;
-      }, rmag/300*1000);
+      const volume = calcVolume(rmag);
+      touch.player.volume.value = volume;
     });
 
     const lineObjects = [];
@@ -126,22 +124,10 @@ export default class Touches {
         const volume = calcVolume(rmag);
 
         player.volume.value = volume;
-        player.triggerAttack(notes[Math.floor(Math.random()*notes.length)], "+" + Math.max(0,(rmag/300-synth.envelope.attack)));
+        player.triggerAttack(notes[Math.floor(Math.random()*notes.length)]);
 
-        const cleanup = (touch) => {
-          const receiverX = window.innerWidth*.5;
-          const receiverY = window.innerHeight*.5;
-
-          const rdx = touch.currentX-receiverX;
-          const rdy = touch.currentX-receiverY;
-          const rmag = Math.sqrt(rdx*rdx+rdy*rdy);
-
-          const time = rmag/300 - synth.envelope.release;
-          if(time > 0) {
-            synth.triggerRelease("+" + time);
-          } else {
-            synth.triggerRelease();
-          }
+        const cleanup = () => {
+          synth.triggerRelease();
           setTimeout(() => {
             player.dispose();
             frequencyShifter.dispose();
@@ -205,22 +191,10 @@ export default class Touches {
     const volume = calcVolume(rmag);
 
     player.volume.value = volume;
-    player.triggerAttack(notes[Math.floor(Math.random()*notes.length)], "+" + Math.max(0,(rmag/300-synth.envelope.attack)));
+    player.triggerAttack(notes[Math.floor(Math.random()*notes.length)]);
 
-    const cleanup = (touch) => {
-      const receiverX = window.innerWidth*.5;
-      const receiverY = window.innerHeight*.5;
-
-      const rdx = touch.currentX-receiverX;
-      const rdy = touch.currentX-receiverY;
-      const rmag = Math.sqrt(rdx*rdx+rdy*rdy);
-
-      const time = rmag/300 - synth.envelope.release;
-      if(time > 0) {
-        synth.triggerRelease("+" + time);
-      } else {
-        synth.triggerRelease();
-      }
+    const cleanup = () => {
+      synth.triggerRelease();
       setTimeout(() => {
         player.dispose();
         frequencyShifter.dispose();

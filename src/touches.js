@@ -59,11 +59,12 @@ export default class Touches {
 
       const dot = touch.vx*dirx + touch.vy*diry;
 
-      const frequency = -dot/200*60;
+//      const frequency = -dot/200*60;
 
       const volume = Math.min(0,-6*Math.log(rmag/100)/Math.log(2));
 
-      touch.frequencyShifter.set({ frequency });
+//      touch.frequencyShifter.set({ frequency });
+      touch.pitchShift.pitch = -dot/200;
       touch.player.volume.value = volume;
     });
 
@@ -101,15 +102,22 @@ export default class Touches {
       } else {
         const curve = new Curve3();
         curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ]);
-        const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
-        const player = new Tone.Player("ambulance.wav").connect(frequencyShifter);
-        player.autostart = true;
-        player.loop = true;
+//        const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
+        const pitchShift = new Tone.PitchShift().toDestination();
+
+        const notes = [ "C3", "E3", "G3", "C4", "E4", "G4", "C5" ];
+        const player = new Tone.Oscillator(notes[Math.floor(Math.random()*notes.length)], "sine").start().connect(pitchShift);
+
+//        const player = new Tone.Player("moonlight.mp3").connect(pitchShift);
+//        player.autostart = true;
+//        player.loop = true;
         const cleanup = () => {
           player.dispose();
-          frequencyShifter.dispose();
+//          frequencyShifter.dispose();
+          pitchShift.dispose();
         };
         const touch = {
+          pitchShift,
           cleanup,
           clientX: eTouch.clientX,
           clientY: eTouch.clientY,
@@ -119,7 +127,7 @@ export default class Touches {
           filteredY: eTouch.clientY,
           lengthAlongCurve: 0,
           player,
-          frequencyShifter,
+//          frequencyShifter,
           vx: 0,
           vy: 0,
           lastTime: now,
@@ -149,16 +157,21 @@ export default class Touches {
     const curve = new Curve3();
     curve.addPoint([ e.clientX, e.clientY, 0 ]);
 
-    const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
-//    const player = new Tone.Synth().connect(frequencyShifter);
-    const player = new Tone.Player("ambulance.wav").connect(frequencyShifter);
-    player.autostart = true;
-    player.loop = true;
+//    const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
+    const pitchShift = new Tone.PitchShift().toDestination();
+//    const player = new Tone.Oscillator(440, "sine").start().connect(frequencyShifter);
+    const notes = [ "C3", "E3", "G3", "C4", "E4", "G4", "C5" ];
+    const player = new Tone.Oscillator(notes[Math.floor(Math.random()*notes.length)], "sine").start().connect(pitchShift);
+//    const player = new Tone.Player("moonlight.mp3").connect(pitchShift);
+//    player.autostart = true;
+//    player.loop = true;
     const cleanup = () => {
       player.dispose();
-      frequencyShifter.dispose();
+//      frequencyShifter.dispose();
+      pitchShift.dispose();
     };
     const touch = { 
+      pitchShift,
       cleanup,
       vx: 0, 
       vy: 0, 
@@ -171,7 +184,7 @@ export default class Touches {
       lastTime: performance.now(), 
       lengthAlongCurve: 0,
       player,
-      frequencyShifter,
+      //frequencyShifter,
       curve 
     };
     this.touches[MOUSE_ID] = touch;

@@ -61,10 +61,9 @@ export default class Touches {
 
       const frequency = -((2**((dot/200)/12))*touch.player.frequency.value- touch.player.frequency.value);
 
-      const volume = Math.min(0,-6*Math.log(rmag/100)/Math.log(2));
-
       touch.frequencyShifter.set({ frequency });
-//      touch.pitchShift.pitch = -dot/200;
+
+      const volume = Math.min(0,-6*Math.log(rmag)/Math.log(2));
       touch.player.volume.value = volume;
     });
 
@@ -103,23 +102,33 @@ export default class Touches {
         const curve = new Curve3();
         curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ]);
         const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
-//        const pitchShift = new Tone.PitchShift().toDestination();
-//        pitchShift.windowSize = .5;
 
         const notes = [ "C3", "E3", "G3", "C4", "E4", "G4", "C5" ];
-//        const player = new Tone.Oscillator(notes[Math.floor(Math.random()*notes.length)], "sine").start().connect(pitchShift);
-        const player = new Tone.Oscillator(notes[Math.floor(Math.random()*notes.length)], "sine").start().connect(frequencyShifter);
+        const ampEnv = new Tone.AmplitudeEnvelope({
+          attack: 1,
+          decay: 0.2,
+          sustain: 1.0,
+          release: 0.8
+        })
+        const player = new Tone.Oscillator(notes[Math.floor(Math.random()*notes.length)], "sine").connect(ampEnv).connect(frequencyShifter);
 
-//        const player = new Tone.Player("moonlight.mp3").connect(pitchShift);
-//        player.autostart = true;
-//        player.loop = true;
+        const receiverX = window.innerWidth*.5;
+        const receiverY = window.innerHeight*.5;
+
+        const rdx = eTouch.clientX-receiverX;
+        const rdy = eTouch.clientY-receiverY;
+        const rmag = Math.sqrt(rdx*rdx+rdy*rdy);
+
+        const volume = Math.min(0,-6*Math.log(rmag)/Math.log(2));
+
+        player.volume.value = volume;
+        player.start();
+
         const cleanup = () => {
           player.dispose();
           frequencyShifter.dispose();
-//          pitchShift.dispose();
         };
         const touch = {
-//          pitchShift,
           cleanup,
           clientX: eTouch.clientX,
           clientY: eTouch.clientY,
@@ -160,22 +169,32 @@ export default class Touches {
     curve.addPoint([ e.clientX, e.clientY, 0 ]);
 
     const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
-//    const pitchShift = new Tone.PitchShift().toDestination();
-//    pitchShift.windowSize = .5;
-//    const player = new Tone.Oscillator(440, "sine").start().connect(frequencyShifter);
     const notes = [ "C3", "E3", "G3", "C4", "E4", "G4", "C5" ];
-//    const player = new Tone.Oscillator(notes[Math.floor(Math.random()*notes.length)], "sine").start().connect(pitchShift);
-    const player = new Tone.Oscillator(notes[Math.floor(Math.random()*notes.length)], "sine").start().connect(frequencyShifter);
-//    const player = new Tone.Player("moonlight.mp3").connect(pitchShift);
-//    player.autostart = true;
-//    player.loop = true;
+    const ampEnv = new Tone.AmplitudeEnvelope({
+      attack: 1,
+      decay: 0.2,
+      sustain: 1.0,
+      release: 0.8
+    })
+    const player = new Tone.Oscillator(notes[Math.floor(Math.random()*notes.length)], "sine").connect(ampEnv).start().connect(frequencyShifter);
+
+    const receiverX = window.innerWidth*.5;
+    const receiverY = window.innerHeight*.5;
+
+    const rdx = e.clientX-receiverX;
+    const rdy = e.clientY-receiverY;
+    const rmag = Math.sqrt(rdx*rdx+rdy*rdy);
+
+    const volume = Math.min(0,-6*Math.log(rmag)/Math.log(2));
+
+    player.volume.value = volume;
+    player.start();
+
     const cleanup = () => {
       player.dispose();
       frequencyShifter.dispose();
-//      pitchShift.dispose();
     };
     const touch = { 
-//      pitchShift,
       cleanup,
       vx: 0, 
       vy: 0, 

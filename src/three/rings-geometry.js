@@ -98,13 +98,13 @@ export class RingsGeometry extends BufferGeometry {
     if(this.needsUpdate && 
        this.updateRange.offset+
        this.updateRange.count < this.maxRings) {
-      console.log("already indicated we needed update, but didn't wrap around");
+//      console.log("already indicated we needed update, but didn't wrap around");
       // we've already indicated that we need to update the array, 
       // but we've updated another ring before the update took place, 
       // so increment the count by another ring
       this.updateRange.count += 1;
     } else if(startPositionAttribute.needsUpdate) {
-      console.log("already indicated we needed update, but wrapped around");
+//      console.log("already indicated we needed update, but wrapped around");
       // we've already indicated we need to update, but we wrapped around
       // so we need to update the whole array
       this.updateRange.offset = 0;

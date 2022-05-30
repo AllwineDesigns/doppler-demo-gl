@@ -7,6 +7,26 @@ const calcVolume = (dist) => {
   return Math.min(-12,-6*Math.log(dist/10)/Math.log(2));
 };
 
+const players = [];
+const MAX_PLAYERS = 20;
+let lastPlayer = -1;
+
+const initPlayers = () => {
+  for(let i = 0; i < MAX_PLAYERS; i++) {
+    const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
+    const synth = new Tone.Synth();
+    synth.oscillator.type = "sine";
+    synth.envelope.sustain = 1;
+
+    const player = synth.connect(frequencyShifter);
+
+    players.push([ player, frequencyShifter ]);
+  }
+
+  lastPlayer = -1;
+};
+
+
 const MOUSE_ID = "mouse";
 export default class Touches {
   constructor() {
@@ -102,17 +122,19 @@ export default class Touches {
 //          touch.curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ])
 //          touch.lineBuffer = touch.curve.resampledBuffer();
         }
-      } else {
+      } else if(Object.keys(this.touches).length < 5) {
         const curve = new Curve3();
         curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ]);
 
-        const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
         const notes = [ "C3", "E3", "G3", "C4", "E4", "G4", "C5" ];
-        const synth = new Tone.Synth();
-        synth.oscillator.type = "sine";
-        synth.envelope.sustain = 1;
-        console.log(synth.envelope.attack, synth.envelope.release);
-        const player = synth.connect(frequencyShifter);
+
+        if(players.length === 0) {
+          initPlayers();
+        }
+
+        lastPlayer = (lastPlayer+1)%players.length;
+        const player = players[lastPlayer][0];
+        const frequencyShifter = players[lastPlayer][1];
 
         const receiverX = window.innerWidth*.5;
         const receiverY = window.innerHeight*.5;
@@ -127,11 +149,7 @@ export default class Touches {
         player.triggerAttack(notes[Math.floor(Math.random()*notes.length)]);
 
         const cleanup = () => {
-          synth.triggerRelease();
-          setTimeout(() => {
-            player.dispose();
-            frequencyShifter.dispose();
-          }, 6000)
+          player.triggerRelease();
         };
         const touch = {
           cleanup,
@@ -173,13 +191,15 @@ export default class Touches {
     const curve = new Curve3();
     curve.addPoint([ e.clientX, e.clientY, 0 ]);
 
-    const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
     const notes = [ "C3", "E3", "G3", "C4", "E4", "G4", "C5" ];
-    const synth = new Tone.Synth();
-    synth.oscillator.type = "sine";
-    synth.envelope.sustain = 1;
-    console.log(synth.envelope.attack, synth.envelope.release);
-    const player = synth.connect(frequencyShifter);
+
+    if(players.length === 0) {
+      initPlayers();
+    }
+
+    lastPlayer = (lastPlayer+1)%players.length;
+    const player = players[lastPlayer][0];
+    const frequencyShifter = players[lastPlayer][1];
 
     const receiverX = window.innerWidth*.5;
     const receiverY = window.innerHeight*.5;
@@ -194,11 +214,7 @@ export default class Touches {
     player.triggerAttack(notes[Math.floor(Math.random()*notes.length)]);
 
     const cleanup = () => {
-      synth.triggerRelease();
-      setTimeout(() => {
-        player.dispose();
-        frequencyShifter.dispose();
-      }, 6000)
+      player.triggerRelease();
     };
     const touch = { 
       cleanup,

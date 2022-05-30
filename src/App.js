@@ -15,7 +15,7 @@ function App() {
       <Rings/>
       <TouchLines/>
     </Canvas>
-    <Ear style={{ fill: "white", minWidth: "100px", width: "5vw", left: "calc(50% - 2.5vw)", top: "calc(50% - 2.5vw)", position: "absolute" }} />
+    <Ear style={{ pointerEvents: "none", fill: "white", minWidth: "100px", width: "5vw", left: "calc(50% - 2.5vw)", top: "calc(50% - 2.5vw)", position: "absolute" }} />
   </>
   );
 }

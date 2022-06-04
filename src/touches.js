@@ -2,16 +2,90 @@ import { Curve3 } from './curve3';
 import { LineBasicMaterial, Line, BufferGeometry, BufferAttribute } from 'three';
 import { useTouchLines } from './Rings';
 
+const noteLookup = {};
+const names = [ "C", "D", "E", "F", "G", "A", "B" ]
+const A4 = 440;
+const computeFrequency = (frequency, halfSteps) => {
+  return frequency*(2**(halfSteps/12))
+};
+const notes = [ computeFrequency(A4, -9),
+                computeFrequency(A4, -7),
+                computeFrequency(A4, -5),
+                computeFrequency(A4, -4),
+                computeFrequency(A4, -2),
+                A4,
+                computeFrequency(A4, 2) ]
+
+for(let octave = 0; octave <= 9; octave++) {
+  for(let i = 0; i < names.length; i++) {
+    const n = names[i] + octave;
+    const ns = names[i] + "s" + octave;
+    const nb = names[i] + "b" + octave;
+
+    noteLookup[n] = computeFrequency(notes[i], (octave-4)*12);
+    noteLookup[ns] = computeFrequency(noteLookup[n], 1);
+    noteLookup[nb] = computeFrequency(noteLookup[n], -1);
+  }
+}
+
+const majorChord = (frequency) => {
+  return [ frequency, computeFrequency(frequency, 4),
+                      computeFrequency(frequency, 7),
+                      computeFrequency(frequency, 12),
+                      computeFrequency(frequency, 16),
+                      computeFrequency(frequency, 19),
+                      computeFrequency(frequency, 24) ];
+};
+
+const minorChord = (frequency) => {
+  return [ frequency, computeFrequency(frequency, 3),
+                      computeFrequency(frequency, 7),
+                      computeFrequency(frequency, 12),
+                      computeFrequency(frequency, 15),
+                      computeFrequency(frequency, 19),
+                      computeFrequency(frequency, 24) ];
+};
+
+const diminishedChord = (frequency) => {
+  return [ frequency, computeFrequency(frequency, 3),
+                      computeFrequency(frequency, 6),
+                      computeFrequency(frequency, 12),
+                      computeFrequency(frequency, 15),
+                      computeFrequency(frequency, 18),
+                      computeFrequency(frequency, 24) ];
+};
+
+// Circle of fifths progression
+const progression = [
+  majorChord(noteLookup["C3"]),
+  majorChord(noteLookup["F3"]),
+  diminishedChord(noteLookup["B3"]),
+  minorChord(noteLookup["E3"]),
+  minorChord(noteLookup["A3"]),
+  minorChord(noteLookup["D3"]),
+  majorChord(noteLookup["G3"]),
+];
+
 const calcVolume = (dist) => {
   return Math.min(1, 50000/(dist*dist));
 };
 
 const MAX_PLAYERS = 11;
 const audio = {
+  chordIndex: 0,
   context: null,
   players: [],
-  lastPlayer: -1
+  lastPlayer: -1,
+  lastChange: performance.now()
 };
+
+const progressChord = () => { 
+  const now = performance.now();
+  if(now - audio.lastChange > 10000) {
+    audio.chordIndex = (audio.chordIndex + 1) % progression.length;
+    audio.lastChange = now;
+  }
+}
 
 const initAudio = () => {
   audio.context = new AudioContext({ latencyHint: 'interactive', sampleRate: audio.sampleRate });
@@ -37,12 +111,13 @@ const initAudio = () => {
     audio.players.push({
       volume,
       oscillator,
-      actualFrequency: 440
+      noteIndex: 1
     });
   }
 };
 
 const createTouch = (e) => {
+  progressChord();
   const now = performance.now();
   const curve = new Curve3();
   curve.addPoint([ e.clientX, e.clientY, 0 ]);
@@ -61,14 +136,13 @@ const createTouch = (e) => {
   const rdy = e.clientY-receiverY;
   const rmag = Math.sqrt(rdx*rdx+rdy*rdy);
 
-//  const volume = 1 || calcVolume(rmag);
-  const volume = .9;
+  const volume = calcVolume(rmag);
 
   player.volume.gain.cancelScheduledValues(audio.context.currentTime)
   player.volume.gain.setValueAtTime(player.volume.gain.value, audio.context.currentTime);
   player.volume.gain.exponentialRampToValueAtTime(volume, audio.context.currentTime+.01);
 
-  player.actualFrequency = randomNote;
+  player.noteIndex = Math.floor(Math.random()*progression[0].length);
   player.oscillator.frequency.cancelScheduledValues(audio.context.currentTime)
   player.oscillator.frequency.setValueAtTime(player.oscillator.frequency.value, audio.context.currentTime);
   player.oscillator.frequency.exponentialRampToValueAtTime(randomNote, audio.context.currentTime+.01);
@@ -155,7 +229,7 @@ export default class Touches {
 
       const dot = touch.vx*dirx + touch.vy*diry;
 
-      const frequency = (2**((-dot/400)/12))*touch.player.actualFrequency;
+      const frequency = (2**((-dot/400)/12))*progression[audio.chordIndex][touch.player.noteIndex];
       touch.player.oscillator.frequency.cancelScheduledValues(audio.context.currentTime)
       touch.player.oscillator.frequency.setValueAtTime(touch.player.oscillator.frequency.value, audio.context.currentTime);
       touch.player.oscillator.frequency.exponentialRampToValueAtTime(frequency, audio.context.currentTime+.01);

@@ -1,29 +1,101 @@
 import { Curve3 } from './curve3';
 import { LineBasicMaterial, Line, BufferGeometry, BufferAttribute } from 'three';
 import { useTouchLines } from './Rings';
-import * as Tone from 'tone'
 
 const calcVolume = (dist) => {
-  return Math.min(-12,-6*Math.log(dist/10)/Math.log(2));
+  return Math.min(1, 50000/(dist*dist));
 };
 
-const players = [];
-const MAX_PLAYERS = 20;
-let lastPlayer = -1;
+const MAX_PLAYERS = 11;
+const audio = {
+  context: null,
+  players: [],
+  lastPlayer: -1
+};
 
-const initPlayers = () => {
+const initAudio = () => {
+  audio.context = new AudioContext({ latencyHint: 'interactive', sampleRate: audio.sampleRate });
+
   for(let i = 0; i < MAX_PLAYERS; i++) {
-    const frequencyShifter = new Tone.FrequencyShifter(0).toDestination();
-    const synth = new Tone.Synth();
-    synth.oscillator.type = "sine";
-    synth.envelope.sustain = 1;
+    const oscillator = audio.context.createOscillator();
+    const volume = audio.context.createGain();
+    const playerGain = audio.context.createGain();
 
-    const player = synth.connect(frequencyShifter);
+    oscillator.connect(playerGain);
+    playerGain.connect(volume);
+    volume.connect(audio.context.destination);
 
-    players.push([ player, frequencyShifter ]);
+    playerGain.gain.value = 1./MAX_PLAYERS * .99;
+
+    volume.gain.value = 0.000001;
+
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 440;
+
+    oscillator.start();
+
+    audio.players.push({
+      volume,
+      oscillator,
+      actualFrequency: 440
+    });
   }
+};
 
-  lastPlayer = -1;
+const createTouch = (e) => {
+  const now = performance.now();
+  const curve = new Curve3();
+  curve.addPoint([ e.clientX, e.clientY, 0 ]);
+
+  audio.lastPlayer = (audio.lastPlayer+1)%audio.players.length;
+  const player = audio.players[audio.lastPlayer];
+
+  const notes = [ 130.81, 164.81, 196, 261.63, 329.63, 392, 523.25 ] ;
+
+  const randomNote = notes[Math.floor(Math.random()*notes.length)];
+
+  const receiverX = window.innerWidth*.5;
+  const receiverY = window.innerHeight*.5;
+
+  const rdx = e.clientX-receiverX;
+  const rdy = e.clientY-receiverY;
+  const rmag = Math.sqrt(rdx*rdx+rdy*rdy);
+
+//  const volume = 1 || calcVolume(rmag);
+  const volume = .9;
+
+  player.volume.gain.cancelScheduledValues(audio.context.currentTime)
+  player.volume.gain.setValueAtTime(player.volume.gain.value, audio.context.currentTime);
+  player.volume.gain.exponentialRampToValueAtTime(volume, audio.context.currentTime+.01);
+
+  player.actualFrequency = randomNote;
+  player.oscillator.frequency.cancelScheduledValues(audio.context.currentTime)
+  player.oscillator.frequency.setValueAtTime(player.oscillator.frequency.value, audio.context.currentTime);
+  player.oscillator.frequency.exponentialRampToValueAtTime(randomNote, audio.context.currentTime+.01);
+
+  const cleanup = () => {
+    player.volume.gain.cancelScheduledValues(audio.context.currentTime)
+    player.volume.gain.setValueAtTime(player.volume.gain.value, audio.context.currentTime);
+    player.volume.gain.exponentialRampToValueAtTime(0.00000001, audio.context.currentTime+.01);
+  };
+
+  const touch = {
+    cleanup,
+    clientX: e.clientX,
+    clientY: e.clientY,
+    currentX: e.clientX,
+    currentY: e.clientY,
+    filteredX: e.clientX,
+    filteredY: e.clientY,
+    lengthAlongCurve: 0,
+    player,
+    vx: 0,
+    vy: 0,
+    lastTime: now,
+    curve
+  };
+
+  return touch;
 };
 
 
@@ -83,12 +155,15 @@ export default class Touches {
 
       const dot = touch.vx*dirx + touch.vy*diry;
 
-      const frequency = -((2**((dot/400)/12))*touch.player.frequency.value- touch.player.frequency.value);
-
-      touch.frequencyShifter.set({ frequency });
+      const frequency = (2**((-dot/400)/12))*touch.player.actualFrequency;
+      touch.player.oscillator.frequency.cancelScheduledValues(audio.context.currentTime)
+      touch.player.oscillator.frequency.setValueAtTime(touch.player.oscillator.frequency.value, audio.context.currentTime);
+      touch.player.oscillator.frequency.exponentialRampToValueAtTime(frequency, audio.context.currentTime+.01);
 
       const volume = calcVolume(rmag);
-      touch.player.volume.value = volume;
+      touch.player.volume.gain.cancelScheduledValues(audio.context.currentTime)
+      touch.player.volume.gain.setValueAtTime(touch.player.volume.gain.value, audio.context.currentTime);
+      touch.player.volume.gain.exponentialRampToValueAtTime(volume, audio.context.currentTime+.01);
     });
 
     const lineObjects = [];
@@ -119,61 +194,20 @@ export default class Touches {
           touch.clientX = eTouch.clientX;
           touch.clientY = eTouch.clientY;
           touch.lastTime = now;
-//          touch.curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ])
-//          touch.lineBuffer = touch.curve.resampledBuffer();
         }
-      } else if(Object.keys(this.touches).length < 5) {
-        const curve = new Curve3();
-        curve.addPoint([ eTouch.clientX, eTouch.clientY, 0 ]);
-
-        const notes = [ "C3", "E3", "G3", "C4", "E4", "G4", "C5" ];
-
-        if(players.length === 0) {
-          initPlayers();
+      } else if(Object.keys(this.touches).length < MAX_PLAYERS) {
+        if(audio.players.length === 0) {
+          initAudio();
         }
 
-        lastPlayer = (lastPlayer+1)%players.length;
-        const player = players[lastPlayer][0];
-        const frequencyShifter = players[lastPlayer][1];
-
-        const receiverX = window.innerWidth*.5;
-        const receiverY = window.innerHeight*.5;
-
-        const rdx = eTouch.clientX-receiverX;
-        const rdy = eTouch.clientY-receiverY;
-        const rmag = Math.sqrt(rdx*rdx+rdy*rdy);
-
-        const volume = calcVolume(rmag);
-
-        player.volume.value = volume;
-        player.triggerAttack(notes[Math.floor(Math.random()*notes.length)]);
-
-        const cleanup = () => {
-          player.triggerRelease();
-        };
-        const touch = {
-          cleanup,
-          clientX: eTouch.clientX,
-          clientY: eTouch.clientY,
-          currentX: eTouch.clientX,
-          currentY: eTouch.clientY,
-          filteredX: eTouch.clientX,
-          filteredY: eTouch.clientY,
-          lengthAlongCurve: 0,
-          player,
-          frequencyShifter,
-          vx: 0,
-          vy: 0,
-          lastTime: now,
-          curve
-        };
+        const touch = createTouch(eTouch);;
         this.touches[id] = touch;
       }
     }
     const keys = Object.keys(this.touches);
     for(let id of keys) {
       if(!seen[id]) {
-        this.touches[id].cleanup(this.touches[id]);
+        this.touches[id].cleanup();
         delete this.touches[id];
       }
     }
@@ -188,50 +222,11 @@ export default class Touches {
   }
 
   mouseDown(e) {
-    const curve = new Curve3();
-    curve.addPoint([ e.clientX, e.clientY, 0 ]);
-
-    const notes = [ "C3", "E3", "G3", "C4", "E4", "G4", "C5" ];
-
-    if(players.length === 0) {
-      initPlayers();
+    if(audio.players.length === 0) {
+      initAudio();
     }
 
-    lastPlayer = (lastPlayer+1)%players.length;
-    const player = players[lastPlayer][0];
-    const frequencyShifter = players[lastPlayer][1];
-
-    const receiverX = window.innerWidth*.5;
-    const receiverY = window.innerHeight*.5;
-
-    const rdx = e.clientX-receiverX;
-    const rdy = e.clientY-receiverY;
-    const rmag = Math.sqrt(rdx*rdx+rdy*rdy);
-
-    const volume = calcVolume(rmag);
-
-    player.volume.value = volume;
-    player.triggerAttack(notes[Math.floor(Math.random()*notes.length)]);
-
-    const cleanup = () => {
-      player.triggerRelease();
-    };
-    const touch = { 
-      cleanup,
-      vx: 0, 
-      vy: 0, 
-      clientX: e.clientX, 
-      clientY: e.clientY, 
-      currentX: e.clientX,
-      currentY: e.clientY,
-      filteredX: e.clientX,
-      filteredY: e.clientY,
-      lastTime: performance.now(), 
-      lengthAlongCurve: 0,
-      player,
-      frequencyShifter,
-      curve 
-    };
+    const touch = createTouch(e);
     this.touches[MOUSE_ID] = touch;
     this.isMouseDown = true;
     e.preventDefault();
@@ -257,7 +252,7 @@ export default class Touches {
   mouseUp(e) {
     this.isMouseDown = false;
     if(this.touches[MOUSE_ID]) {
-      this.touches[MOUSE_ID].cleanup(this.touches[MOUSE_ID]);
+      this.touches[MOUSE_ID].cleanup();
       delete this.touches[MOUSE_ID];
     }
     e.preventDefault();

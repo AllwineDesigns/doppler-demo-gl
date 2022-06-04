@@ -176,7 +176,6 @@ attribute vec2 velocity;
 attribute vec2 direction;
 attribute float startTime;
 
-varying float vStartTime;
 varying vec2 vStartPos;
 varying vec2 vPos;
 varying vec2 vVel;
@@ -184,7 +183,6 @@ varying vec2 vDir;
 
 void main() {
   vec2 pos = startPosition+direction*(time-startTime);
-  vStartTime = startTime;
   vPos = pos;
   vDir = direction;
   vVel = velocity;
@@ -197,7 +195,6 @@ void main() {
 uniform float time;
 uniform vec3 color;
 
-varying float vStartTime;
 varying vec2 vStartPos;
 varying vec2 vPos;
 varying vec2 vVel;

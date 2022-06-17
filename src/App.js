@@ -18,15 +18,19 @@ function App() {
       document.location.reload();
     };
     if(canvas) {
-      canvas.addEventListener("webglcontextlost", contextLostCallback, false);
+      canvas.addEventListener("webglcontextrestored", contextLostCallback, false);
     }
 
     return () => { 
       if(canvas) {
-        canvas.removeEventListener("webglcontextlost", contextLostCallback, false);
+        canvas.removeEventListener("webglcontextrestored", contextLostCallback, false);
       };
     };
   }, [ canvasRef ]);
+
+  useEffect(() => {
+    setTimeout(() => { document.location.reload() }, 5*60*1000);
+  });
 
   return (
   <>

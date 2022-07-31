@@ -28,9 +28,9 @@ function App() {
     };
   }, [ canvasRef ]);
 
-  useEffect(() => {
-    setTimeout(() => { document.location.reload() }, 5*60*1000);
-  });
+//  useEffect(() => {
+//    setTimeout(() => { document.location.reload() }, 5*60*1000);
+//  });
 
   return (
   <>

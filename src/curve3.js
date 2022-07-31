@@ -143,8 +143,8 @@ export class Curve3 {
     return this.lengths[i]*(1-t)+this.lengths[i+1]*t;
   }
 
-  resampleBetweenLengthsInto(from, to, touchLinesGeometry) {
-    const samples = Math.trunc(Math.max(this.samplesPerLinearLength*(to-from), 4));
+  resampleBetweenLengthsInto(from, to, max, touchLinesGeometry) {
+    const samples = Math.min(Math.trunc(Math.max(this.samplesPerLinearLength*(to-from), 4)), max);
     const divideBy = this.isLoop ? samples : samples -1;
 
     const totalLength = to-from;

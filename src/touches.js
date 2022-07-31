@@ -240,9 +240,17 @@ export default class Touches {
     const touchLinesGeometry = useTouchLines.getState().touchLinesGeometry;
     touchLinesGeometry.clearLines();
 
+    let totalLength = 0;
     Object.values(this.touches).forEach((touch) => {
-      touch.curve.resampleBetweenLengthsInto(touch.lengthAlongCurve, touch.curve.lengthAt(1), touchLinesGeometry);
+      touch.lengthThisFrame = touch.curve.lengthAt(1)-touch.lengthAlongCurve;
+      totalLength += touch.lengthThisFrame;
     });
+
+    Object.values(this.touches).forEach((touch) => {
+      touch.maxSamplesThisFrame = touch.lengthThisFrame/totalLength*touchLinesGeometry.maxLines;
+      touch.curve.resampleBetweenLengthsInto(touch.lengthAlongCurve, touch.curve.lengthAt(1), touch.maxSamplesThisFrame, touchLinesGeometry);
+    });
+
     touchLinesGeometry.update();
 
   }

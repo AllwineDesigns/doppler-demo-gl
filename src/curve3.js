@@ -1,3 +1,5 @@
+const MAX_POINTS = 2000;
+const MAX_SAMPLES = 10000;
 // catmull rom curve with 3d points
 export class Curve3 {
   constructor() {
@@ -14,7 +16,7 @@ export class Curve3 {
     this.lengths = [ 0 ];
     let len = 0;
     let lastPt = this.pointAt(0);
-    const samples = this.samplesPerLinearLength*this.linearLength;
+    const samples = Math.min(this.samplesPerLinearLength*this.linearLength, MAX_SAMPLES);
     for(let i = 1; i <= samples; i++) {
       const t = i/samples;
       const pt = this.pointAt(t);
@@ -31,15 +33,18 @@ export class Curve3 {
   }
 
   addPoint(pt) {
-    this.points.push(pt);
-    this.lengthsCalculated = false;
-    if(this.points.length >= 2) {
-      const p0 = this.points[this.points.length-2];
-      const p1 = this.points[this.points.length-1];
-      const dx = p1[0]-p0[0];
-      const dy = p1[1]-p0[1];
-      const dz = p1[2]-p0[2];
-      this.linearLength += Math.sqrt(dx*dx+dy*dy+dz*dz);
+    if(this.points.length < MAX_POINTS) {
+      console.log(this.points.length);
+      this.points.push(pt);
+      this.lengthsCalculated = false;
+      if(this.points.length >= 2) {
+        const p0 = this.points[this.points.length-2];
+        const p1 = this.points[this.points.length-1];
+        const dx = p1[0]-p0[0];
+        const dy = p1[1]-p0[1];
+        const dz = p1[2]-p0[2];
+        this.linearLength += Math.sqrt(dx*dx+dy*dy+dz*dz);
+      }
     }
   }
 

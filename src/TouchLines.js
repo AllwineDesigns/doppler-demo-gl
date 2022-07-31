@@ -1,13 +1,29 @@
-import { useTouchLines } from './Rings';
-import { useThree } from '@react-three/fiber';
+import { useEffect, useRef } from 'react';
+import { useThree, extend } from '@react-three/fiber';
+import create from 'zustand';
+import { TouchLinesGeometry } from './three/touch-lines-geometry';
+extend({ TouchLinesGeometry });
+
+export const useTouchLines = create(set => ({
+  touchLinesGeometry: null,
+  setTouchLinesGeometry: (touchLinesGeometry) => set({ touchLinesGeometry })
+}));
 
 export default function TouchLines() {
-  const { lineObjects } = useTouchLines();
   const { size } = useThree();
+  const touchLinesRef = useRef();
+  const { setTouchLinesGeometry } = useTouchLines();
+
+  useEffect(() => {
+    setTouchLinesGeometry(touchLinesRef.current);
+  }, [ touchLinesRef, setTouchLinesGeometry ]);
 
   return (<>
   <group position-x={-size.width*.5} position-y={size.height*.5} scale-y={-1}>
-    { lineObjects.map((lineObject, i) => (<primitive object={lineObject} key={i}/>))}
+    <lineSegments>
+      <touchLinesGeometry ref={touchLinesRef}/>
+      <lineBasicMaterial color={0xffffff}/>
+    </lineSegments>
   </group>
   </>)
 }

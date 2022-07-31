@@ -4,12 +4,6 @@ import { RingsGeometry, RingsMaterial } from './three/rings-geometry';
 import { Vector2 } from 'three';
 import now from 'performance-now';
 import TouchManager from './touches';
-import create from 'zustand';
-
-export const useTouchLines = create(set => ({
-  lineObjects: [],
-  setLines: (lineObjects) => set({ lineObjects })
-}));
 
 extend({ RingsGeometry, RingsMaterial });
 

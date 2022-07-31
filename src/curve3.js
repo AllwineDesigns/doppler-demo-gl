@@ -143,6 +143,21 @@ export class Curve3 {
     return this.lengths[i]*(1-t)+this.lengths[i+1]*t;
   }
 
+  resampleBetweenLengthsInto(from, to, touchLinesGeometry) {
+    const samples = Math.trunc(Math.max(this.samplesPerLinearLength*(to-from), 4));
+    const divideBy = this.isLoop ? samples : samples -1;
+
+    const totalLength = to-from;
+    for(let i = 0; i < samples-1; i++) {
+      const t = this.paramAtLength(from+totalLength*i/divideBy);
+      const t2 = this.paramAtLength(from+totalLength*(i+1)/divideBy);
+      const p = this.pointAt(t);
+      const p2 = this.pointAt(t2);
+
+      touchLinesGeometry.addLine(p[0], p[1], p2[0], p2[1]);
+    }
+  }
+
   resampledBufferBetweenLengths(from, to) {
     const samples = Math.trunc(Math.max(this.samplesPerLinearLength*(to-from), 4));
     const divideBy = this.isLoop ? samples : samples -1;

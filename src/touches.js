@@ -1,6 +1,5 @@
 import { Curve3 } from './curve3';
-import { LineBasicMaterial, Line, BufferGeometry, BufferAttribute } from 'three';
-import { useTouchLines } from './Rings';
+import { useTouchLines } from './TouchLines';
 
 const noteLookup = {};
 const names = [ "C", "D", "E", "F", "G", "A", "B" ]
@@ -198,8 +197,6 @@ export default class Touches {
       if(mag > .1) {
         touch.curve.addPoint([ touch.filteredX, touch.filteredY, 0 ])
       }
-      touch.lineBuffer = touch.curve.resampledBufferBetweenLengths(touch.lengthAlongCurve, touch.curve.lengthAt(1));
-
       touch.lengthAlongCurve += 400/1000*dt;
 
       const t = touch.curve.paramAtLength(touch.lengthAlongCurve);
@@ -240,18 +237,13 @@ export default class Touches {
       touch.player.volume.gain.exponentialRampToValueAtTime(volume, audio.context.currentTime+.01);
     });
 
-    const lineObjects = [];
-    const material = new LineBasicMaterial({ color: 0xffffff });
+    const touchLinesGeometry = useTouchLines.getState().touchLinesGeometry;
+    touchLinesGeometry.clearLines();
+
     Object.values(this.touches).forEach((touch) => {
-      if(touch.lineBuffer) {
-        const positionAttribute = new BufferAttribute(touch.lineBuffer, 3);
-        const geometry = new BufferGeometry();
-        geometry.setAttribute('position', positionAttribute);
-        const lineObject = new Line(geometry, material);
-        lineObjects.push(lineObject);
-      }
+      touch.curve.resampleBetweenLengthsInto(touch.lengthAlongCurve, touch.curve.lengthAt(1), touchLinesGeometry);
     });
-    useTouchLines.getState().setLines(lineObjects);
+    touchLinesGeometry.update();
 
   }
 

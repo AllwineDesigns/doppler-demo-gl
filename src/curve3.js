@@ -34,7 +34,6 @@ export class Curve3 {
 
   addPoint(pt) {
     if(this.points.length < MAX_POINTS) {
-      console.log(this.points.length);
       this.points.push(pt);
       this.lengthsCalculated = false;
       if(this.points.length >= 2) {

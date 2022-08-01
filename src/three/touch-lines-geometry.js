@@ -1,11 +1,11 @@
-import { DynamicDrawUsage, BufferGeometry, Float32BufferAttribute } from 'three';
+import { StreamDrawUsage, BufferGeometry, Float32BufferAttribute } from 'three';
 
 export class TouchLinesGeometry extends BufferGeometry {
   constructor(maxLines=10000) {
     super();
 
     this.positionAttribute = new Float32BufferAttribute(maxLines*4, 2);
-    this.positionAttribute.usage = DynamicDrawUsage;
+    this.positionAttribute.usage = StreamDrawUsage;
 
     this.setAttribute('position', this.positionAttribute);
     this.setDrawRange(0, 0);

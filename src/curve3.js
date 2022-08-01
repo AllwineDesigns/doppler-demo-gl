@@ -1,4 +1,4 @@
-const MAX_POINTS = 2000;
+const MAX_POINTS = 1000;
 const MAX_SAMPLES = 10000;
 // catmull rom curve with 3d points
 export class Curve3 {
@@ -30,6 +30,11 @@ export class Curve3 {
     }
 
     this.lengthsCalculated = true;
+  }
+
+  clearPoints() {
+    this.points = [];
+    this.lengthsCalculated = false;
   }
 
   addPoint(pt) {
@@ -139,12 +144,51 @@ export class Curve3 {
       return this.lengths[this.lengths.length-1];
     }
 
-    const samples = this.samplesPerLinearLength*this.linearLength;
+    const samples = this.lengths.length-1;
 
     const i = Math.trunc(tt*samples);
     const t = (tt*samples-i)
 
     return this.lengths[i]*(1-t)+this.lengths[i+1]*t;
+  }
+
+  // Removes complete curve segments up to a maximum of len long
+  // Returns the approximate length of the curve segments that were removed.
+  removeUpToLength(len) {
+    const tt = this.paramAtLength(len);
+
+    let t; // parameter between 0-1 of current curve segment of 4 points
+    let i; // current curve index
+    let curves; // number of curve segments in total curve
+
+    if(this.isLoop) {
+      curves = Math.max(this.points.length, 2);
+    } else {
+      curves = Math.max(this.points.length-1, 1);
+    }
+
+    if(tt === 1) {
+      t = 1;
+      i = curves-1;
+    } else {
+      t = tt;
+      t *= curves;
+      i = Math.trunc(t);
+      t -= i;
+    }
+
+    const deleteUpToIndex = Math.max(i-2, 0);
+    const deleteLength = this.lengthAt(i/curves);
+
+    this.points.splice(0, deleteUpToIndex+1);
+    this.lengthsCalculated = false;
+
+    if(isNaN(deleteLength)) {
+      console.error("deleteLength was NaN");
+      return len;
+    }
+
+    return deleteLength;
   }
 
   resampleBetweenLengthsInto(from, to, max, touchLinesGeometry) {

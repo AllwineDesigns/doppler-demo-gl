@@ -206,6 +206,11 @@ export default class Touches {
 
       const p = touch.curve.pointAt(t);
 
+      if(t > .5 && touch.curve.points.length > 100) {
+        const deleteLength = touch.curve.removeUpToLength(touch.lengthAlongCurve);
+        touch.lengthAlongCurve = Math.max(0, touch.lengthAlongCurve-deleteLength);
+      }
+
       const lastX = touch.currentX;
       const lastY = touch.currentY;
 
